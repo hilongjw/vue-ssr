@@ -25,9 +25,17 @@ function getHTML(template) {
     };
 }
 
+function getFileName(webpackServer, projectName) {
+    return webpackServer.output.filename.replace('[name]', projectName);
+}
+
 var renderer = {};
 
-function VueRender(projectName, rendererOptions, webpackServer) {
+function VueRender(_ref) {
+    var projectName = _ref.projectName;
+    var rendererOptions = _ref.rendererOptions;
+    var webpackServer = _ref.webpackServer;
+
 
     var options = Object.assign({}, DEFAULT_RENDERER_OPTIONS, rendererOptions);
 
@@ -39,7 +47,7 @@ function VueRender(projectName, rendererOptions, webpackServer) {
         var HTML = getHTML(template);
 
         if (!isDev) {
-            var bundlePath = path.join(webpackServer.output.path, 'server/' + projectName + '.js');
+            var bundlePath = path.join(webpackServer.output.path, getFileName(webpackServer, projectName));
             renderer[projectName] = createRenderer(fs.readFileSync(bundlePath, 'utf-8'));
         } else {
             require('./bundle-loader')(webpackServer, projectName, function (bundle) {

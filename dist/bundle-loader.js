@@ -4,10 +4,14 @@ var path = require('path');
 var webpack = require('webpack');
 var MFS = require('memory-fs');
 
+function getFileName(serverConfig, projectName) {
+    return serverConfig.output.filename.replace('[name]', projectName);
+}
+
 module.exports = function setupDevServer(serverConfig, projectName, onUpdate) {
     var serverCompiler = webpack(serverConfig);
     var mfs = new MFS();
-    var outputPath = path.join(serverConfig.output.path, 'server/' + projectName + '.js');
+    var outputPath = path.join(serverConfig.output.path, getFileName(serverConfig, projectName));
 
     serverCompiler.outputFileSystem = mfs;
     serverCompiler.watch({}, function (err, stats) {
