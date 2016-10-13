@@ -1,6 +1,6 @@
 {
   "name": "vue-ssr",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Vue Server Side Render with Express",
   "main": "dist/renderer.js",
   "scripts": {
