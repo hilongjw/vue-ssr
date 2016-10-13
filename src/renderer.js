@@ -38,7 +38,7 @@ function VueRender (projectName, rendererOptions, webpackServer) {
         const HTML = getHTML(template)
 
         if (!isDev) {
-            const bundlePath = resolve(serverConfig.output.path, projectName + '.js')
+            const bundlePath = resolve(webpackServer.output.path, projectName + '.js')
             renderer[projectName] = createRenderer(fs.readFileSync(bundlePath, 'utf-8'))
         } else {
             require('./bundle-loader')(webpackServer, projectName, bundle => {

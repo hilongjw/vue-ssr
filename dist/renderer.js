@@ -1,15 +1,19 @@
+'use strict';
+
 process.env.VUE_ENV = 'server';
 
-const isDev = NODE_ENV === 'development';
+var isDev = NODE_ENV === 'development';
 
-const fs = require('fs');
-const path = require('path');
-const resolve = file => path.resolve(__dirname, file);
-const serialize = require('serialize-javascript');
+var fs = require('fs');
+var path = require('path');
+var resolve = function resolve(file) {
+    return path.resolve(__dirname, file);
+};
+var serialize = require('serialize-javascript');
 
-const createBundleRenderer = require('vue-server-renderer').createBundleRenderer;
+var createBundleRenderer = require('vue-server-renderer').createBundleRenderer;
 
-const DEFAULT_RENDERER_OPTIONS = {
+var DEFAULT_RENDERER_OPTIONS = {
     cache: require('lru-cache')({
         max: 1000,
         maxAge: 1000 * 60 * 15
@@ -17,31 +21,31 @@ const DEFAULT_RENDERER_OPTIONS = {
 };
 
 function getHTML(template) {
-    const i = template.indexOf('{{ APP }}');
+    var i = template.indexOf('{{ APP }}');
     return {
         head: template.slice(0, i),
         tail: template.slice(i + '{{ APP }}'.length)
     };
 }
 
-let renderer = {};
+var renderer = {};
 
 function VueRender(projectName, rendererOptions, webpackServer) {
 
-    const options = Object.assign({}, DEFAULT_RENDERER_OPTIONS, rendererOptions);
+    var options = Object.assign({}, DEFAULT_RENDERER_OPTIONS, rendererOptions);
 
     function createRenderer(bundle) {
         return createBundleRenderer(bundle, options);
     }
 
-    return (req, res, template) => {
-        const HTML = getHTML(template);
+    return function (req, res, template) {
+        var HTML = getHTML(template);
 
         if (!isDev) {
-            const bundlePath = resolve(serverConfig.output.path, projectName + '.js');
+            var bundlePath = resolve(webpackServer.output.path, projectName + '.js');
             renderer[projectName] = createRenderer(fs.readFileSync(bundlePath, 'utf-8'));
         } else {
-            require('./bundle-loader')(webpackServer, projectName, bundle => {
+            require('./bundle-loader')(webpackServer, projectName, function (bundle) {
                 renderer[projectName] = createRenderer(bundle);
             });
         }
@@ -50,31 +54,31 @@ function VueRender(projectName, rendererOptions, webpackServer) {
             return res.end('waiting for compilation... refresh in a moment.');
         }
 
-        let s = Date.now();
-        const context = { url: req.url };
-        const renderStream = renderer[projectName].renderToStream(context);
-        let firstChunk = true;
+        var s = Date.now();
+        var context = { url: req.url };
+        var renderStream = renderer[projectName].renderToStream(context);
+        var firstChunk = true;
 
         res.write(HTML.head);
 
-        renderStream.on('data', chunk => {
+        renderStream.on('data', function (chunk) {
             if (firstChunk) {
                 if (context.initialState) {
-                    res.write(`<script>window.__INITIAL_STATE__=${ serialize(context.initialState, { isJSON: true }) }</script>`);
+                    res.write('<script>window.__INITIAL_STATE__=' + serialize(context.initialState, { isJSON: true }) + '</script>');
                 }
                 firstChunk = false;
             }
             res.write(chunk);
         });
 
-        renderStream.on('end', () => {
+        renderStream.on('end', function () {
             res.end(HTML.tail);
             if (isDev) {
-                console.log(`whole request: ${ Date.now() - s }ms`);
+                console.log('whole request: ' + (Date.now() - s) + 'ms');
             }
         });
 
-        renderStream.on('error', err => {
+        renderStream.on('error', function (err) {
             console.error(err);
         });
     };
