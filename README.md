@@ -89,7 +89,7 @@ const dashRenderer = vueRender({
 
 ### rendererOptions
 
-[seem as Vue server renderer API](https://github.com/vuejs/vue/tree/dev/packages/vue-server-renderer#renderer-options)
+rendererOptions is [Vue server renderer](https://github.com/vuejs/vue/tree/dev/packages/vue-server-renderer#renderer-options) options
 
 #### directives
 

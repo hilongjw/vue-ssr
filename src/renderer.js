@@ -53,7 +53,6 @@ function VueRender ({ projectName, rendererOptions, webpackServer }) {
             return res.end('waiting for compilation... refresh in a moment.')
         }
 
-        let s = Date.now()
         const context = { url: req.url }
         const renderStream = renderer[projectName].renderToStream(context)
         let firstChunk = true
@@ -76,9 +75,6 @@ function VueRender ({ projectName, rendererOptions, webpackServer }) {
 
         renderStream.on('end', () => {
             res.end(HTML.tail)
-            if (isDev) {
-                console.log(`whole request: ${Date.now() - s}ms`)
-            }
         })
 
         renderStream.on('error', err => {

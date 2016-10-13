@@ -59,7 +59,6 @@ function VueRender(_ref) {
             return res.end('waiting for compilation... refresh in a moment.');
         }
 
-        var s = Date.now();
         var context = { url: req.url };
         var renderStream = renderer[projectName].renderToStream(context);
         var firstChunk = true;
@@ -78,9 +77,6 @@ function VueRender(_ref) {
 
         renderStream.on('end', function () {
             res.end(HTML.tail);
-            if (isDev) {
-                console.log('whole request: ' + (Date.now() - s) + 'ms');
-            }
         });
 
         renderStream.on('error', function (err) {
