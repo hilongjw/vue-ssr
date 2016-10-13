@@ -4,7 +4,6 @@ const isDev = NODE_ENV === 'development'
 
 const fs = require('fs')
 const path = require('path')
-const resolve = file => path.resolve(__dirname, file)
 const serialize = require('serialize-javascript')
 
 const createBundleRenderer = require('vue-server-renderer').createBundleRenderer
@@ -38,7 +37,7 @@ function VueRender (projectName, rendererOptions, webpackServer) {
         const HTML = getHTML(template)
 
         if (!isDev) {
-            const bundlePath = resolve(webpackServer.output.path, projectName + '.js')
+            const bundlePath = path.join(webpackServer.output.path, 'server/' + projectName + '.js')
             renderer[projectName] = createRenderer(fs.readFileSync(bundlePath, 'utf-8'))
         } else {
             require('./bundle-loader')(webpackServer, projectName, bundle => {
