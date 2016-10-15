@@ -17,11 +17,14 @@ var DEFAULT_RENDERER_OPTIONS = {
     })
 };
 
+var renderer = {};
+var DEFAULT_APP_HTML = '{{ APP }}';
+
 function getHTML(template) {
-    var i = template.indexOf('{{ APP }}');
+    var i = template.indexOf(DEFAULT_APP_HTML);
     return {
         head: template.slice(0, i),
-        tail: template.slice(i + '{{ APP }}'.length)
+        tail: template.slice(i + DEFAULT_APP_HTML.length)
     };
 }
 
@@ -29,15 +32,18 @@ function getFileName(webpackServer, projectName) {
     return webpackServer.output.filename.replace('[name]', projectName);
 }
 
-var renderer = {};
-
 function VueRender(_ref) {
     var projectName = _ref.projectName;
     var rendererOptions = _ref.rendererOptions;
     var webpackServer = _ref.webpackServer;
+    var AppHtml = _ref.AppHtml;
 
 
     var options = Object.assign({}, DEFAULT_RENDERER_OPTIONS, rendererOptions);
+
+    if (AppHtml) {
+        DEFAULT_APP_HTML = AppHtml;
+    }
 
     function createRenderer(bundle) {
         return createBundleRenderer(bundle, options);

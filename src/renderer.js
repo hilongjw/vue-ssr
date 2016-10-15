@@ -15,11 +15,14 @@ const DEFAULT_RENDERER_OPTIONS  = {
     })
 }
 
+let renderer = {}
+let DEFAULT_APP_HTML = '{{ APP }}'
+
 function getHTML (template) {
-    const i = template.indexOf('{{ APP }}')
+    const i = template.indexOf(DEFAULT_APP_HTML)
     return {
         head: template.slice(0, i),
-        tail: template.slice(i + '{{ APP }}'.length)
+        tail: template.slice(i + DEFAULT_APP_HTML.length)
     }
 }
 
@@ -27,12 +30,14 @@ function getFileName (webpackServer, projectName) {
     return webpackServer.output.filename.replace('[name]', projectName)
 }
 
-let renderer = {}
-
-function VueRender ({ projectName, rendererOptions, webpackServer }) {
+function VueRender ({ projectName, rendererOptions, webpackServer , AppHtml }) {
 
     const options = Object.assign({}, DEFAULT_RENDERER_OPTIONS, rendererOptions)
-
+    
+    if (AppHtml) {
+        DEFAULT_APP_HTML = AppHtml
+    }
+    
     function createRenderer(bundle) {
         return createBundleRenderer(bundle, options)
     }

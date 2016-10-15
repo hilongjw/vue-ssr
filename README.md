@@ -131,6 +131,42 @@ const indexRenderer = vueRender({
 })
 ```
 
+### AppHtml
+
+The default AppHtml is  `{{ APP }}`, rendering of the server side is replaced by AppHtml
+
+```html
+<html>
+<body>
+    {{ APP }}
+</body>
+</html>
+```
+
+```html
+<html>
+<body>
+    <div id="app" server-rendered="true">
+        ...
+    </div>
+</body>
+</html>
+
+```
+
+You can also customize it 
+
+```javascrit
+
+const indexRenderer = vueRender({
+    projectName: 'index',
+    webpackServer: serverConfig,
+    AppHtml: '<div id="app"></div>'
+})
+
+```
+
+
 # Example
 
 [vue-express-hot-simple](https://github.com/hilongjw/vue-express-hot-simple)
