@@ -166,6 +166,20 @@ const indexRenderer = vueRender({
 
 ```
 
+### contextHandler
+
+```
+const indexRenderer = vueRender({
+    contextHandler: function (req) {
+        return {
+            url: req.url,
+            ua: uaParser(req.headers['user-agent'])
+        }
+    }
+})
+```
+
+
 
 # Example
 
