@@ -3,7 +3,6 @@
 var fs = require('fs');
 var path = require('path');
 var serialize = require('serialize-javascript');
-var uaParser = require('ua-parser-js');
 
 process.env.VUE_ENV = 'server';
 var NODE_ENV = process.env.NODE_ENV || 'production';

@@ -1,7 +1,6 @@
 const fs = require('fs')
 const path = require('path')
 const serialize = require('serialize-javascript')
-const uaParser = require('ua-parser-js')
 
 process.env.VUE_ENV = 'server'
 const NODE_ENV = process.env.NODE_ENV || 'production'
