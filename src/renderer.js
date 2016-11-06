@@ -17,14 +17,6 @@ const DEFAULT_RENDERER_OPTIONS  = {
 
 const DEFAULT_APP_HTML = '{{ APP }}'
 
-function parseHTML (template) {
-    const i = template.indexOf(DEFAULT_APP_HTML)
-    return {
-        head: template.slice(0, i),
-        tail: template.slice(i + DEFAULT_APP_HTML.length)
-    }
-}
-
 function getFileName (webpackServer, projectName) {
     return webpackServer.output.filename.replace('[name]', projectName)
 }
@@ -60,11 +52,19 @@ class VueSSR {
         }
     }
 
+    parseHTML (template) {
+        const i = template.indexOf(this.AppHtml)
+        this.HTML = {
+            head: template.slice(0, i),
+            tail: template.slice(i + this.AppHtml.length)
+        }
+    }
+
     render (req, res, template) {
         if (this.template !== template) {
-            this.HTML = parseHTML(template)
+            this.parseHTML(template)
         }
-        
+
         if (!this.renderer) {
             return res.end('waiting for compilation... refresh in a moment.')
         }
@@ -105,6 +105,8 @@ class VueSSR {
             console.error(err)
         })
     }
+
+
 }
 
 module.exports = VueSSR
