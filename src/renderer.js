@@ -3,6 +3,7 @@ const path = require('path')
 const serialize = require('serialize-javascript')
 
 process.env.VUE_ENV = 'server'
+
 const NODE_ENV = process.env.NODE_ENV || 'production'
 const isDev = NODE_ENV === 'development'
 
@@ -14,8 +15,7 @@ const DEFAULT_RENDERER_OPTIONS  = {
     })
 }
 
-let VueRenderer = {}
-let DEFAULT_APP_HTML = '{{ APP }}'
+const DEFAULT_APP_HTML = '{{ APP }}'
 
 function parseHTML (template) {
     const i = template.indexOf(DEFAULT_APP_HTML)
@@ -29,81 +29,82 @@ function getFileName (webpackServer, projectName) {
     return webpackServer.output.filename.replace('[name]', projectName)
 }
 
-function initRenderer (webpackServer, projectName, createRenderer) {
-    if (VueRenderer[projectName]) {
-        return VueRenderer[projectName]
+class VueSSR {
+    constructor ({ projectName, rendererOptions, webpackServer , AppHtml, contextHandler }) {
+        this.projectName = projectName
+        this.rendererOptions = Object.assign({}, DEFAULT_RENDERER_OPTIONS, rendererOptions)
+        this.webpackServerConfig = webpackServer
+        this.AppHtml = AppHtml || DEFAULT_APP_HTML
+        this.contextHandler = contextHandler
+        this.HTML = null
+        this.template = ''
+        this.initRenderer()
     }
 
-    if (!isDev) {
-        const bundlePath = path.join(webpackServer.output.path, getFileName(webpackServer, projectName))
-        VueRenderer[projectName] = createRenderer(fs.readFileSync(bundlePath, 'utf-8'))
-    } else {
-        require('./bundle-loader')(webpackServer, projectName, bundle => {
-            VueRenderer[projectName] = createRenderer(bundle)
+    createRenderer (bundle) {
+        return createBundleRenderer(bundle, this.rendererOptions)
+    }
+
+    initRenderer () {
+        if (this.renderer) {
+            return this.renderer
+        }
+
+        if (!isDev) {
+            const bundlePath = path.join(this.webpackServerConfig.output.path, getFileName(this.webpackServerConfig, this.projectName))
+            this.renderer = this.createRenderer(fs.readFileSync(bundlePath, 'utf-8'))
+        } else {
+            require('./bundle-loader')(this.webpackServerConfig, this.projectName, bundle => {
+                this.renderer = this.createRenderer(bundle)
+            })
+        }
+    }
+
+    render (req, res, template) {
+        if (this.template !== template) {
+            this.HTML = parseHTML(template)
+        }
+        
+        if (!this.renderer) {
+            return res.end('waiting for compilation... refresh in a moment.')
+        }
+
+        let context = { url: req.url}
+
+        if (this.contextHandler) {
+            context = this.contextHandler(req)
+        }
+
+        this.RenderToStream(context, res)
+    }
+
+    RenderToStream (context, res) {
+        const renderStream = this.renderer.renderToStream(context)
+        let firstChunk = true
+
+        res.write(this.HTML.head)
+        renderStream.on('data', chunk => {
+            if (firstChunk) {
+                if (context.initialState) {
+                    res.write(
+                        `<script>window.__INITIAL_STATE__=${
+                            serialize(context.initialState, { isJSON: true })
+                        }</script>`
+                    )
+                }
+                firstChunk = false
+            }
+            res.write(chunk)
+        })
+
+        renderStream.on('end', () => {
+            res.end(this.HTML.tail)
+        })
+
+        renderStream.on('error', err => {
+            console.error(err)
         })
     }
 }
 
-function VueRender ({ projectName, rendererOptions, webpackServer , AppHtml, contextHandler }) {
-
-    const options = Object.assign({}, DEFAULT_RENDERER_OPTIONS, rendererOptions)
-    
-    if (AppHtml) {
-        DEFAULT_APP_HTML = AppHtml
-    }
-    
-    function createRenderer(bundle) {
-        return createBundleRenderer(bundle, options)
-    }
-
-    return (req, res, template) => {
-        const HTML = parseHTML(template)
-
-        const renderer = initRenderer(webpackServer, projectName, createRenderer)
-
-        if (!renderer) {
-            return res.end('waiting for compilation... refresh in a moment.')
-        }
-
-        let context
-
-        if (contextHandler) {
-            context = contextHandler(req)
-        } else {
-            context = { url: req.url}
-        }
-
-        RenderToStream(renderer, context, HTML, res)
-    }
-}
-
-function RenderToStream (renderer, context, HTML, res) {
-    const renderStream = renderer.renderToStream(context)
-
-    let firstChunk = true
-    res.write(HTML.head)
-
-    renderStream.on('data', chunk => {
-        if (firstChunk) {
-            if (context.initialState) {
-                res.write(
-                    `<script>window.__INITIAL_STATE__=${
-                        serialize(context.initialState, { isJSON: true })
-                    }</script>`
-                )
-            }
-            firstChunk = false
-        }
-        res.write(chunk)
-    })
-
-    renderStream.on('end', () => {
-        res.end(HTML.tail)
-    })
-
-    renderStream.on('error', err => {
-        console.error(err)
-    })
-}
-
-module.exports = VueRender
+module.exports = VueSSR

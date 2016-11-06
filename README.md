@@ -14,13 +14,13 @@ npm i vue-ssr --save
 const express = require('express')
 const router = express.Router()
 
-const vueRender = require('vue-ssr')
+const VueSSR = require('vue-ssr')
 
 // webpack server-side bundle config
 const serverConfig = require('path to webpack.server.js')
 
 // create a project renderer
-const indexRenderer = vueRender({
+const indexRenderer = new VueSSR({
     projectName: 'index', 
     rendererOptions: {
         cache: require('lru-cache')({
@@ -33,7 +33,7 @@ const indexRenderer = vueRender({
 
 // handle 
 function indexView (req, res) => {
-    indexRenderer(req, res, `
+    indexRenderer.render(req, res, `
     <!DOCTYPE html>
     <html lang="en">
       <head>
@@ -76,12 +76,12 @@ entry: {
 ```
 
 ```
-const indexRenderer = vueRender({
+const indexRenderer = new VueSSR({
     projectName: 'index',
     webpackServer: serverConfig
 })
 
-const dashRenderer = vueRender({
+const dashRenderer = new VueSSR({
     projectName: 'dashboard',
     webpackServer: serverConfig
 })
@@ -96,7 +96,7 @@ rendererOptions is [Vue server renderer](https://github.com/vuejs/vue/tree/dev/p
 Allows you to provide server-side implementations for your custom directives:
 
 ```
-const indexRenderer = vueRender('index', {
+const indexRenderer = new VueSSR('index', {
   directives: {
     example (vnode, directiveMeta) {
       // transform vnode based on directive binding metadata
@@ -108,7 +108,7 @@ const indexRenderer = vueRender('index', {
 #### cache
 
 ```
-const indexRenderer = vueRender('index', {
+const indexRenderer = new VueSSR('index', {
     cache: require('lru-cache')({
         max: 1000,
         maxAge: 1000 * 60 * 15
@@ -125,7 +125,7 @@ for example [webpack.server.js](https://github.com/hilongjw/vue-express-hot-simp
 ```
 const serverConfig = require('path to webpack.server.js')
 
-const indexRenderer = vueRender({
+const indexRenderer = new VueSSR({
     projectName: 'index', 
     webpackServer: serverConfig
 })
@@ -158,7 +158,7 @@ You can also customize it
 
 ```javascrit
 
-const indexRenderer = vueRender({
+const indexRenderer = new VueSSR({
     projectName: 'index',
     webpackServer: serverConfig,
     AppHtml: '<div id="app"></div>'
@@ -169,7 +169,7 @@ const indexRenderer = vueRender({
 ### contextHandler
 
 ```
-const indexRenderer = vueRender({
+const indexRenderer = new VueSSR({
     contextHandler: function (req) {
         return {
             url: req.url,
