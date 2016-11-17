@@ -179,6 +179,62 @@ const indexRenderer = new VueSSR({
 })
 ```
 
+### defaultHeadData
+
+```javascript
+const indexRenderer = new VueSSR({
+    defaultHeadData: {
+        baseTitle: 'VueSSR',
+        baseKeywords: ',vue-ssr',
+        baseDescription: 'Vue server-side rendering',
+        title: '',
+        description: '',
+        keywords: ''
+    }
+})
+```
+
+```jade
+head
+    meta(charset="utf-8")
+    meta(name="renderer", content="webkit")
+    title {{ _VueSSR_Title }}
+    meta(name="viewport", content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no")
+    meta(name="keywords", content="{{ _VueSSR_Keywords }}")
+    meta(name="description", content="{{ _VueSSR_Description }}")
+```
+
+server-entry.js
+
+```
+export default context => {
+    router.push(context.url)
+    return Promise.all(router.getMatchedComponents().map(component => {
+        if (component.preFetch) {
+            return component.preFetch(store, router, context)
+        }
+    })).then(() => {
+        context.initialState = store.state
+        return app
+    })
+}
+```
+
+simple component
+
+```javascript
+export default {
+    preFetch (store, router, context) {
+        context.headData = {
+            title: 'this article's title,
+            description: 'about this article',
+            keywords: 'Vue,vuejs,javascript'
+        }
+        return Promise.resolve()
+    }
+}
+```
+
 
 
 # Example
