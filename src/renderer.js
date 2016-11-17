@@ -16,13 +16,25 @@ const DEFAULT_RENDERER_OPTIONS  = {
 }
 
 const DEFAULT_APP_HTML = '{{ APP }}'
+const DEFAULT_TITLE_HTML = '{{ _VueSSR_Title }}'
+const DEFAULT_KEYWORDS_HTML = '{{ _VueSSR_Keywords }}'
+const DEFAULT_DESCRIPTION_HTML = '{{ _VueSSR_Description }}'
+
+const DEFAULT_HEAD_DATA = {
+    baseTitle: 'VueSSR',
+    baseKeywords: ',VueSSR',
+    baseDescription: 'VueSSR',
+    title: '',
+    description: '',
+    keywords: ''
+}
 
 function getFileName (webpackServer, projectName) {
     return webpackServer.output.filename.replace('[name]', projectName)
 }
 
 class VueSSR {
-    constructor ({ projectName, rendererOptions, webpackServer , AppHtml, contextHandler }) {
+    constructor ({ projectName, rendererOptions, webpackServer , AppHtml, contextHandler, defaultHeadData }) {
         this.projectName = projectName
         this.rendererOptions = Object.assign({}, DEFAULT_RENDERER_OPTIONS, rendererOptions)
         this.webpackServerConfig = webpackServer
@@ -30,7 +42,17 @@ class VueSSR {
         this.contextHandler = contextHandler
         this.HTML = null
         this.template = ''
+        this.defaultHeadData = defaultHeadData || DEFAULT_HEAD_DATA
         this.initRenderer()
+    }
+
+    headDataInject (context, html) {
+        if (!context.headData) context.headData = {}
+        let head
+        head = html.replace('{{ _VueSSR_Title }}', (context.headData.title || this.defaultHeadData.title) + this.defaultHeadData.baseTitle)
+        head = head.replace('{{ _VueSSR_Keywords }}', (context.headData.keywords || this.defaultHeadData.keywords) + this.defaultHeadData.baseKeywords)
+        head = head.replace('{{ _VueSSR_Description }}', (context.headData.description || this.defaultHeadData.description) + this.defaultHeadData.baseDescription)
+        return head
     }
 
     createRenderer (bundle) {
@@ -81,10 +103,10 @@ class VueSSR {
     RenderToStream (context, res) {
         const renderStream = this.renderer.renderToStream(context)
         let firstChunk = true
-
-        res.write(this.HTML.head)
+        
         renderStream.on('data', chunk => {
             if (firstChunk) {
+                res.write(this.headDataInject(context, this.HTML.head))
                 if (context.initialState) {
                     res.write(
                         `<script>window.__INITIAL_STATE__=${
@@ -103,10 +125,9 @@ class VueSSR {
 
         renderStream.on('error', err => {
             console.error(err)
+            res.end('<script>location.href="/"</script>')
         })
     }
-
-
 }
 
 module.exports = VueSSR

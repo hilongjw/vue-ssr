@@ -22,6 +22,18 @@ var DEFAULT_RENDERER_OPTIONS = {
 };
 
 var DEFAULT_APP_HTML = '{{ APP }}';
+var DEFAULT_TITLE_HTML = '{{ _VueSSR_Title }}';
+var DEFAULT_KEYWORDS_HTML = '{{ _VueSSR_Keywords }}';
+var DEFAULT_DESCRIPTION_HTML = '{{ _VueSSR_Description }}';
+
+var DEFAULT_HEAD_DATA = {
+    baseTitle: 'VueSSR',
+    baseKeywords: ',VueSSR',
+    baseDescription: 'VueSSR',
+    title: '',
+    description: '',
+    keywords: ''
+};
 
 function getFileName(webpackServer, projectName) {
     return webpackServer.output.filename.replace('[name]', projectName);
@@ -34,6 +46,7 @@ var VueSSR = function () {
         var webpackServer = _ref.webpackServer;
         var AppHtml = _ref.AppHtml;
         var contextHandler = _ref.contextHandler;
+        var defaultHeadData = _ref.defaultHeadData;
 
         _classCallCheck(this, VueSSR);
 
@@ -44,10 +57,21 @@ var VueSSR = function () {
         this.contextHandler = contextHandler;
         this.HTML = null;
         this.template = '';
+        this.defaultHeadData = defaultHeadData || DEFAULT_HEAD_DATA;
         this.initRenderer();
     }
 
     _createClass(VueSSR, [{
+        key: 'headDataInject',
+        value: function headDataInject(context, html) {
+            if (!context.headData) context.headData = {};
+            var head = void 0;
+            head = html.replace('{{ _VueSSR_Title }}', (context.headData.title || this.defaultHeadData.title) + this.defaultHeadData.baseTitle);
+            head = head.replace('{{ _VueSSR_Keywords }}', (context.headData.keywords || this.defaultHeadData.keywords) + this.defaultHeadData.baseKeywords);
+            head = head.replace('{{ _VueSSR_Description }}', (context.headData.description || this.defaultHeadData.description) + this.defaultHeadData.baseDescription);
+            return head;
+        }
+    }, {
         key: 'createRenderer',
         value: function createRenderer(bundle) {
             return createBundleRenderer(bundle, this.rendererOptions);
@@ -106,9 +130,9 @@ var VueSSR = function () {
             var renderStream = this.renderer.renderToStream(context);
             var firstChunk = true;
 
-            res.write(this.HTML.head);
             renderStream.on('data', function (chunk) {
                 if (firstChunk) {
+                    res.write(_this2.headDataInject(context, _this2.HTML.head));
                     if (context.initialState) {
                         res.write('<script>window.__INITIAL_STATE__=' + serialize(context.initialState, { isJSON: true }) + '</script>');
                     }
@@ -123,6 +147,7 @@ var VueSSR = function () {
 
             renderStream.on('error', function (err) {
                 console.error(err);
+                res.end('<script>location.href="/"</script>');
             });
         }
     }]);
